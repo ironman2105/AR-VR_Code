@@ -24,7 +24,7 @@
         <a-scene
             embedded
             vr-mode-ui="enabled: false; cardboard: false"
-            webxr="requiredFeatures: local-floor; optionalFeatures: bounded-floor"
+            webxr="optionalFeatures: local-floor, bounded-floor"
             device-orientation-permission-ui="enabled: false"
         >
             <!-- Lighting -->
@@ -74,13 +74,11 @@
                     contact: rows[3]?.v || "N/A"
                 };
 
-                // Update HTML elements
                 document.getElementById("name").innerText = details.name;
                 document.getElementById("address").innerText = details.address;
                 document.getElementById("email").innerText = details.email;
                 document.getElementById("contact").innerText = details.contact;
 
-                // Update AR scene text
                 const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
                 document.getElementById("contactDetails").setAttribute("value", arText);
 
@@ -95,22 +93,21 @@
         async function startARSession() {
             try {
                 const session = await navigator.xr.requestSession('immersive-ar', {
-                    requiredFeatures: ['local-floor'],
-                    optionalFeatures: ['bounded-floor']
+                    optionalFeatures: ['local-floor', 'bounded-floor']
                 });
-                console.log("AR session started:", session);
+                console.log("AR session started successfully:", session);
                 status.innerText = "AR mode activated! Objects should appear on the floor.";
 
                 session.addEventListener('end', () => {
                     console.log("AR session ended.");
-                    status.innerText = "AR mode ended.";
+                    status.innerText = "AR mode ended. Showing 2D view.";
                 });
 
-                // Link the WebXR session to A-Frame
                 const scene = document.querySelector('a-scene');
                 scene.renderer.xr.setSession(session);
             } catch (error) {
-                console.error("Failed to start AR session:", error);
+                console.error("Failed to start AR session:", error.message);
+                console.error("Error details:", error);
                 status.innerText = "Failed to enter AR mode. Check console.";
             }
         }
@@ -119,19 +116,19 @@
         window.onload = async function() {
             await fetchData();
 
-            // Check WebXR support and start AR session automatically
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-ar').then(supported => {
                     if (supported) {
                         status.innerText += " AR supported! Starting AR mode...";
                         console.log("WebXR AR supported.");
-                        startARSession(); // Automatically start AR mode
+                        startARSession();
                     } else {
-                        status.innerText += " AR not supported. Showing 2D view.";
+                        status.innerText += " AR not supported on this device/browser. Showing 2D view.";
                         console.log("WebXR AR not supported.");
                     }
                 }).catch(err => {
-                    console.error("WebXR check failed:", err);
+                    console.error("WebXR support check failed:", err.message);
+                    console.error("Error details:", err);
                     status.innerText += " WebXR error. Showing 2D view.";
                 });
             } else {
@@ -139,7 +136,6 @@
                 status.innerText += " WebXR not supported. Showing 2D view.";
             }
 
-            // Debug scene rendering
             const scene = document.querySelector('a-scene');
             scene.addEventListener('loaded', () => {
                 console.log("A-Frame scene loaded.");
