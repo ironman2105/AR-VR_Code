@@ -1,53 +1,96 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>AR Floor Visiting Card</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.1.1/dist/aframe-ar-hit-test.min.js"></script>
-    <style>
-      body, html { margin: 0; overflow: hidden; height: 100%; }
-      #instructions {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        color: white;
-        font-size: 16px;
-        background: rgba(0,0,0,0.5);
-        padding: 10px;
-        border-radius: 8px;
-        z-index: 2;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="instructions">📡 Move your phone to detect a flat surface and tap to place card.</div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Visiting Card</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js/aframe/build/aframe-ar.js"></script>
+</head>
+<body>
+    <h2>AR Visiting Card</h2>
+    <p id="status">Loading data...</p>
 
+    <!-- Contact Details Display -->
+    <div id="details">
+        <p><strong>Name:</strong> <span id="name">Loading...</span></p>
+        <p><strong>Address:</strong> <span id="address">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+        <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
+    </div>
+
+    <!-- AR Scene -->
     <a-scene
-      renderer="colorManagement: true;"
-      xrweb="allowed: true"
-      webxr="requiredFeatures: hit-test;"
-      ar-hit-test="target:#card;type:placement;"
-      embedded
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
+        embedded
+        arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best; debugUIEnabled: false; matrixCodeType: 3x3;"
+        renderer="colorManagement: true; physicallyCorrectLights: true"
     >
-      <!-- The AR camera -->
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+        <!-- Lighting -->
+        <a-light type="ambient" intensity="1"></a-light>
+        <a-light type="directional" intensity="1" position="0 2 1"></a-light>
 
-      <!-- Hidden initially, shown when placed -->
-      <a-entity id="card" visible="false" scale="0.3 0.3 0.3">
-        <!-- 3D Card Base -->
-        <a-box depth="0.02" height="0.5" width="1" color="#333" position="0 0.25 0"></a-box>
-        
-        <!-- Contact Text -->
-        <a-text value="👤 John Doe" position="-0.45 0.45 0.02" width="2" color="white"></a-text>
-        <a-text value="📍 123 Main St, Surat" position="-0.45 0.35 0.02" width="2" color="white"></a-text>
-        <a-text value="📧 john.doe@email.com" position="-0.45 0.25 0.02" width="2" color="white"></a-text>
-        <a-text value="📞 +91-1234567890" position="-0.45 0.15 0.02" width="2" color="white"></a-text>
-      </a-entity>
+        <!-- Cartoon 3D Model (Use a placeholder for testing) -->
+        <a-box
+            position="0 0 -1"
+            scale="0.5 0.5 0.5"
+            color="red"
+        ></a-box>
+
+        <!-- Contact Details Text -->
+        <a-text
+            id="contactDetails"
+            value="Loading..."
+            position="0.3 0 -1"
+            color="white"
+            align="left"
+            width="1"
+            scale="0.3 0.3 0.3"
+        ></a-text>
+
     </a-scene>
-  </body>
+
+    <script>
+        const status = document.getElementById("status");
+
+        // Fetch Contact Details from Google Sheet
+        async function fetchData() {
+            status.innerText = "Fetching data from Google Sheet...";
+            const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs"; // Replace with your Google Sheets ID
+            const url = `https://docs.google.com/spreadsheets/d/1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs/gviz/tq?tqx=out:json`;
+
+            try {
+                let response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                let text = await response.text();
+                let jsonData = JSON.parse(text.substring(47, text.length - 2));
+                let rows = jsonData.table.rows[0].c;
+
+                const details = {
+                    name: rows[0]?.v || "N/A",
+                    address: rows[1]?.v || "N/A",
+                    email: rows[2]?.v || "N/A",
+                    contact: rows[3]?.v || "N/A"
+                };
+
+                document.getElementById("name").innerText = details.name;
+                document.getElementById("address").innerText = details.address;
+                document.getElementById("email").innerText = details.email;
+                document.getElementById("contact").innerText = details.contact;
+
+                const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
+                document.getElementById("contactDetails").setAttribute("value", arText);
+
+                status.innerText = "Data loaded successfully!";
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                status.innerText = "Failed to load data. Check console.";
+            }
+        }
+
+        window.onload = async function() {
+            await fetchData();
+        };
+    </script>
+</body>
 </html>
