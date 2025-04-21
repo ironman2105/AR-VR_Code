@@ -19,58 +19,38 @@
         <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
     </div>
 
-    <!-- Manual AR Button (Fallback) -->
+    <!-- Manual AR Button -->
     <button id="enterAR" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">Enter AR Mode</button>
 
     <!-- AR Scene -->
     <div id="arScene">
         <a-scene
             embedded
-            vr-mode-ui="enabled: true; cardboard: false"
+            vr-mode-ui="enabled: false; cardboard: false"
             webxr="requiredFeatures: local-floor; optionalFeatures: bounded-floor"
             device-orientation-permission-ui="enabled: false"
         >
             <!-- Lighting -->
-            <a-light type="ambient" intensity="0.5"></a-light>
-            <a-light type="directional" intensity="0.5" position="0 2 1"></a-light>
+            <a-light type="ambient" intensity="1"></a-light>
+            <a-light type="directional" intensity="1" position="0 2 1"></a-light>
 
-            <!-- Cartoon 3D Model -->
-            <a-gltf-model
-                src="models/robot.glb"
-                position="-0.5 0 -1"
-                scale="0.3 0.3 0.3"
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
-            ></a-gltf-model>
+            <!-- Test Object -->
+            <a-box
+                position="0 0 -0.5"
+                scale="0.2 0.2 0.2"
+                color="red"
+            ></a-box>
 
-            <!-- Fallback Box -->
-            <a-box position="-0.5 0 -1" color="red" scale="0.2 0.2 0.2" visible="false"></a-box>
-
-            <!-- Visiting Card (Textured Plane) -->
-            <a-plane
-                position="0.5 0.5 -1"
+            <!-- Contact Details Text -->
+            <a-text
+                id="contactDetails"
+                value="Loading..."
+                position="0.3 0 -0.5"
+                color="black"
+                align="left"
                 width="1"
-                height="0.6"
-                material="src: images/card-texture.jpg; color: #ffffff"
-                rotation="0 0 0"
-            >
-                <a-text
-                    value="Contact Details:"
-                    position="-0.4 0.2 0.01"
-                    color="black"
-                    align="left"
-                    width="0.8"
-                    scale="0.3 0.3 0.3"
-                ></a-text>
-                <a-text
-                    id="contactDetails"
-                    value="Loading..."
-                    position="-0.4 0 0.01"
-                    color="black"
-                    align="left"
-                    width="0.8"
-                    scale="0.3 0.3 0.3"
-                ></a-text>
-            </a-plane>
+                scale="0.3 0.3 0.3"
+            ></a-text>
         </a-scene>
     </div>
 
@@ -124,6 +104,10 @@
                 });
                 console.log("AR session started:", session);
                 status.innerText = "AR mode activated!";
+                session.addEventListener('end', () => {
+                    console.log("AR session ended.");
+                    status.innerText = "AR mode ended.";
+                });
             } catch (error) {
                 console.error("Failed to start AR session:", error);
                 status.innerText = "Failed to enter AR mode. Check console.";
@@ -138,8 +122,8 @@
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-ar').then(supported => {
                     if (supported) {
-                        status.innerText += " AR supported! Tap the AR icon to enter AR mode.";
-                        console.log("WebXR AR supported, AR icon should be visible.");
+                        status.innerText += " AR supported! Tap the button to enter AR mode.";
+                        console.log("WebXR AR supported.");
                         enterARButton.style.display = "block";
                         enterARButton.addEventListener("click", startARSession);
                     } else {

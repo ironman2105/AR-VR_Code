@@ -44,4 +44,16 @@ h2 {
     border: 2px solid #333;
     border-radius: 8px;
     margin-top: 20px;
+    position: relative;
+    overflow: visible;
+}
+
+#arScene canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+#enterAR {
+    z-index: 1000;
 }
