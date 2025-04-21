@@ -30,41 +30,45 @@
             webxr="requiredFeatures: local-floor; optionalFeatures: bounded-floor"
             device-orientation-permission-ui="enabled: false"
         >
+            <!-- Lighting -->
+            <a-light type="ambient" intensity="0.5"></a-light>
+            <a-light type="directional" intensity="0.5" position="0 2 1"></a-light>
+
             <!-- Cartoon 3D Model -->
             <a-gltf-model
-                src="https://cdn.glitch.com/1b6c7a5a-0087-4e4e-9f1c-5e0b29a67b2a%2Frobot_expressive.glb"
-                position="-1 0 -2"
-                scale="0.5 0.5 0.5"
+                src="models/robot.glb"
+                position="-0.5 0 -1"
+                scale="0.3 0.3 0.3"
                 animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
             ></a-gltf-model>
 
-            <!-- Fallback Box (if model fails) -->
-            <a-box position="-1 0 -2" color="red" visible="false"></a-box>
+            <!-- Fallback Box -->
+            <a-box position="-0.5 0 -1" color="red" scale="0.2 0.2 0.2" visible="false"></a-box>
 
             <!-- Visiting Card (Textured Plane) -->
             <a-plane
-                position="1 1 -2"
-                width="2"
-                height="1.2"
-                material="src: https://cdn.pixabay.com/photo/2023/01/08/04/35/background-7704985_1280.jpg; color: #ffffff"
+                position="0.5 0.5 -1"
+                width="1"
+                height="0.6"
+                material="src: images/card-texture.jpg; color: #ffffff"
                 rotation="0 0 0"
             >
                 <a-text
                     value="Contact Details:"
-                    position="-0.8 0.4 0.01"
+                    position="-0.4 0.2 0.01"
                     color="black"
                     align="left"
-                    width="1.5"
-                    scale="0.5 0.5 0.5"
+                    width="0.8"
+                    scale="0.3 0.3 0.3"
                 ></a-text>
                 <a-text
                     id="contactDetails"
                     value="Loading..."
-                    position="-0.8 0 0.01"
+                    position="-0.4 0 0.01"
                     color="black"
                     align="left"
-                    width="1.5"
-                    scale="0.5 0.5 0.5"
+                    width="0.8"
+                    scale="0.3 0.3 0.3"
                 ></a-text>
             </a-plane>
         </a-scene>
@@ -107,7 +111,7 @@
                 status.innerText = "Data loaded successfully!";
             } catch (error) {
                 console.error("Error fetching data:", error);
-                status.innerText = "Failed to load data. Check console for details.";
+                status.innerText = "Failed to load data. Check console.";
             }
         }
 
@@ -136,11 +140,10 @@
                     if (supported) {
                         status.innerText += " AR supported! Tap the AR icon to enter AR mode.";
                         console.log("WebXR AR supported, AR icon should be visible.");
-                        // Show manual AR button as fallback
                         enterARButton.style.display = "block";
                         enterARButton.addEventListener("click", startARSession);
                     } else {
-                        status.innerText += " AR not supported on this device. Showing 2D view.";
+                        status.innerText += " AR not supported. Showing 2D view.";
                         console.log("WebXR AR not supported.");
                     }
                 }).catch(err => {
@@ -149,8 +152,17 @@
                 });
             } else {
                 console.log("WebXR not supported in this browser.");
-                status.innerText += " WebXR not supported in this browser. Showing 2D view.";
+                status.innerText += " WebXR not supported. Showing 2D view.";
             }
+
+            // Debug scene rendering
+            const scene = document.querySelector('a-scene');
+            scene.addEventListener('loaded', () => {
+                console.log("A-Frame scene loaded.");
+            });
+            scene.addEventListener('renderstart', () => {
+                console.log("A-Frame rendering started.");
+            });
         };
     </script>
 </body>
