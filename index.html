@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Contact Details</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+</head>
+<body>
+    <h2>AR Contact Details</h2>
+    <p id="status">Loading data...</p>
+
+    <!-- Contact Details Display -->
+    <div id="details">
+        <p><strong>Name:</strong> <span id="name">Loading...</span></p>
+        <p><strong>Address:</strong> <span id="address">Loading...</span></p>
+        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+        <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
+    </div>
+
+    <!-- AR Scene -->
+    <div id="arScene">
+        <a-scene embedded vr-mode-ui="enabled: true" webxr="requiredFeatures: local-floor;">
+            <!-- Sky Background -->
+            <a-sky color="#87CEEB"></a-sky>
+
+            <!-- Option 1: Cartoon 3D Model (Active) -->
+            <!-- <a-gltf-model
+                src="https://cdn.glitch.com/1b6c7a5a-0087-4e4e-9f1c-5e0b29a67b2a%2Frobot_expressive.glb"
+                position="0 0 -2"
+                scale="0.5 0.5 0.5"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
+            ></a-gltf-model> -->
+
+            <!-- Option 2: Flat Video (Uncomment to Use, Comment Out Cartoon) -->
+            <!--
+            <a-video
+                src="https://cdn.pixabay.com/video/2023/07/24/173354-847814813_tiny.mp4"
+                position="0 1 -2"
+                width="2"
+                height="1.125"
+                autoplay
+                loop
+            ></a-video>
+            -->
+            <a-video src="videos/komix.mp4" position="0 1 -2" width="2" height="1.125" autoplay loop></a-video>
+
+            <!-- Contact Details Text -->
+            <a-text
+                value="Hi!\nContact Details:"
+                position="2 2 -2"
+                color="black"
+                align="center"
+                width="4"
+            ></a-text>
+            <a-text
+                id="contactDetails"
+                value="Loading..."
+                position="2 1 -2"
+                color="black"
+                align="center"
+                width="4"
+            ></a-text>
+        </a-scene>
+    </div>
+
+    <script>
+        const status = document.getElementById("status");
+
+        // Fetch Contact Details from Google Sheet
+        async function fetchData() {
+            status.innerText = "Fetching data from Google Sheet...";
+            const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs";
+            const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+
+            try {
+                let response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                let text = await response.text();
+                let jsonData = JSON.parse(text.substring(47, text.length - 2));
+                let rows = jsonData.table.rows[0].c;
+
+                const details = {
+                    name: rows[0]?.v || "N/A",
+                    address: rows[1]?.v || "N/A",
+                    email: rows[2]?.v || "N/A",
+                    contact: rows[3]?.v || "N/A"
+                };
+
+                // Update HTML elements
+                document.getElementById("name").innerText = details.name;
+                document.getElementById("address").innerText = details.address;
+                document.getElementById("email").innerText = details.email;
+                document.getElementById("contact").innerText = details.contact;
+
+                // Update AR scene text
+                const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
+                document.getElementById("contactDetails").setAttribute("value", arText);
+
+                status.innerText = "Data loaded successfully!";
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                status.innerText = "Failed to load data. Check console for details.";
+            }
+        }
+
+        // Initialize
+        window.onload = function() {
+            fetchData();
+
+            // Check WebXR support
+            if (navigator.xr) {
+                navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+                    if (supported) {
+                        status.innerText += " AR supported! Tap the AR icon to enter AR mode.";
+                    } else {
+                        status.innerText += " AR not supported on this device. Showing VR view.";
+                    }
+                }).catch(err => {
+                    console.error("WebXR check failed:", err);
+                    status.innerText += " WebXR error. Showing VR view.";
+                });
+            } else {
+                status.innerText += " WebXR not supported in this browser. Showing VR view.";
+            }
+        };
+    </script>
+</body>
+</html>
