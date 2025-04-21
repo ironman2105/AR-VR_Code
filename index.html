@@ -25,34 +25,28 @@
   </div>
 
   <!-- AR Scene -->
-  <a-scene
-    vr-mode-ui="enabled: false"
-    embedded
-    webxr="optionalFeatures: hit-test; dom-overlay"
-    renderer="colorManagement: true; physicallyCorrectLights: true"
-    xrweb
-  >
-    <!-- Lighting -->
-    <a-light type="ambient" intensity="1"></a-light>
-    <a-light type="directional" intensity="1" position="0 2 1"></a-light>
+  <!-- Add to <a-scene> -->
+<a-scene
+vr-mode-ui="enabled: false"
+embedded
+renderer="colorManagement: true; physicallyCorrectLights: true"
+webxr="optionalFeatures: hit-test;"
+cursor="rayOrigin: mouse"
+>
+<!-- Lights -->
+<a-light type="ambient" intensity="1"></a-light>
+<a-light type="directional" intensity="1" position="0 2 1"></a-light>
 
-    <!-- Anchor for floor placement -->
-    <a-entity position="0 0 0">
-      <!-- AR Object: Red Box -->
-      <a-box position="0 0.1 -1" scale="0.2 0.2 0.2" color="red"></a-box>
+<!-- Hit-test placement logic -->
+<a-entity id="reticle" visible="false" geometry="primitive: ring; radiusInner: 0.05; radiusOuter: 0.08;"
+          material="color: green; shader: flat" position="0 0 -1" rotation="-90 0 0">
+</a-entity>
 
-      <!-- AR Text with details -->
-      <a-text
-        id="contactDetails"
-        value="Loading..."
-        position="-0.5 0 -1.2"
-        color="white"
-        align="left"
-        width="1.5"
-        scale="0.3 0.3 0.3"
-      ></a-text>
-    </a-entity>
-  </a-scene>
+<!-- Your AR object -->
+<a-box id="arBox" visible="false" color="red" depth="0.2" height="0.2" width="0.2"></a-box>
+<a-text id="arText" value="AR Details" visible="false" position="-0.5 0.25 -1" scale="0.3 0.3 0.3" color="white"></a-text>
+</a-scene>
+
 
   <script>
     const status = document.getElementById("status");
@@ -103,6 +97,61 @@
     window.onload = async function () {
       await fetchData();
     };
+
+        AFRAME.registerComponent('ar-hit-test', {
+          init: function () {
+            const sceneEl = this.el.sceneEl;
+            const arBox = document.querySelector("#arBox");
+            const arText = document.querySelector("#arText");
+            const reticle = document.querySelector("#reticle");
+      
+            this.el.sceneEl.addEventListener('enter-vr', () => {
+              if (sceneEl.renderer.xr.getSession()) {
+                const viewerSpace = sceneEl.renderer.xr.getReferenceSpace();
+                const hitTestSource = sceneEl.renderer.xr.getSession().requestReferenceSpace('viewer')
+                  .then(refSpace => {
+                    return sceneEl.renderer.xr.getSession().requestHitTestSource({ space: refSpace });
+                  });
+      
+                sceneEl.renderer.xr.getSession().addEventListener('select', () => {
+                  if (reticle.getAttribute('visible')) {
+                    const position = reticle.object3D.position;
+                    arBox.setAttribute('visible', true);
+                    arBox.setAttribute('position', position);
+                    arText.setAttribute('visible', true);
+                    arText.setAttribute('position', { x: position.x - 0.5, y: position.y + 0.25, z: position.z });
+                  }
+                });
+      
+                sceneEl.renderer.setAnimationLoop((time, frame) => {
+                  if (!frame) return;
+      
+                  const referenceSpace = sceneEl.renderer.xr.getReferenceSpace();
+                  hitTestSource.then(source => {
+                    const hitTestResults = frame.getHitTestResults(source);
+                    if (hitTestResults.length > 0) {
+                      const hit = hitTestResults[0];
+                      const pose = hit.getPose(referenceSpace);
+      
+                      reticle.setAttribute('visible', true);
+                      reticle.object3D.position.set(pose.transform.position.x, pose.transform.position.y, pose.transform.position.z);
+                      reticle.object3D.quaternion.set(
+                        pose.transform.orientation.x,
+                        pose.transform.orientation.y,
+                        pose.transform.orientation.z,
+                        pose.transform.orientation.w
+                      );
+                    }
+                  });
+                });
+              }
+            });
+          }
+        });
+      
+        document.querySelector("a-scene").setAttribute("ar-hit-test", "");
+
+      
   </script>
 </body>
 </html>
