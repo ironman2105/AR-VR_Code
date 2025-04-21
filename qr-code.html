@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+</head>
+<body>
+
+    <h2>Permanent QR Code</h2>
+    <canvas id="qr-code"></canvas>
+
+    <script>
+        let websiteURL = "https://yourname.github.io/details.html"; // Change this to your hosted HTML page
+
+        new QRious({
+            element: document.getElementById("qr-code"),
+            value: websiteURL,
+            size: 200
+        });
+    </script>
+
+</body>
+</html>
