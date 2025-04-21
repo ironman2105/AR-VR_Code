@@ -1,74 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AR Visiting Card</title>
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.0.0/dist/aframe-ar-hit-test.min.js"></script>
     <style>
       body {
         margin: 0;
         overflow: hidden;
-        font-family: Arial, sans-serif;
-        background: #000;
-        color: #fff;
-        text-align: center;
       }
-      #loading {
+      #message {
         position: absolute;
-        width: 100%;
         top: 10px;
-        z-index: 1;
-        font-size: 1.2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        z-index: 10;
+        font-size: 1.2em;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 8px;
       }
     </style>
   </head>
   <body>
-    <div id="loading">📡 Starting AR Experience...</div>
+    <div id="message">📡 Move your phone to detect a flat surface...</div>
 
     <a-scene
       webxr="optionalFeatures: hit-test;"
       vr-mode-ui="enabled: false"
       renderer="colorManagement: true"
+      ar-hit-test="target: #card; type: select"
       embedded
-      ar-hit-test="target: #infoBox"
     >
-      <!-- Camera and Light -->
       <a-entity camera></a-entity>
-      <a-light type="ambient" intensity="1"></a-light>
 
-      <!-- Info Box that appears on the floor -->
-      <a-entity id="infoBox" visible="false">
-        <a-box color="red" depth="0.1" height="0.1" width="0.1" position="0 0 0"></a-box>
+      <a-entity id="card" visible="false">
+        <a-box color="crimson" position="0 0.05 0" height="0.1" width="0.3" depth="0.2"></a-box>
         <a-text
-          value="Name: Tony Stark\nEmail: tony@starkindustries.com\nContact: 123-456-7890"
-          color="#FFF"
-          position="0 0.2 0"
+          value="Tony Stark\nEmail: tony@stark.com\nPhone: 1234567890"
           align="center"
+          position="0 0.3 0"
           width="2"
+          color="white"
         ></a-text>
       </a-entity>
     </a-scene>
 
     <script>
-      const infoBox = document.getElementById("infoBox");
-      const loading = document.getElementById("loading");
+      const card = document.getElementById("card");
+      const msg = document.getElementById("message");
 
+      // When hit-test successfully places the object
       AFRAME.scenes[0].addEventListener("ar-hit-test-select", () => {
-        infoBox.setAttribute("visible", true);
-        loading.innerText = "✅ Object placed!";
+        card.setAttribute("visible", true);
+        msg.innerText = "✅ Object placed on the surface!";
       });
 
-      AFRAME.scenes[0].addEventListener("enter-vr", () => {
-        loading.innerText = "Move your phone to detect a surface...";
-      });
-
-      AFRAME.scenes[0].addEventListener("exit-vr", () => {
-        loading.innerText = "📡 AR session ended.";
-        infoBox.setAttribute("visible", false);
-      });
+      // Fallback if nothing happens after a few seconds
+      setTimeout(() => {
+        if (!card.getAttribute("visible")) {
+          msg.innerText = "⚠️ Try pointing your phone at a brighter flat surface.";
+        }
+      }, 7000);
     </script>
   </body>
 </html>
