@@ -21,31 +21,36 @@
 
     <!-- Manual AR Button -->
     <button id="enterAR" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">Enter AR Mode</button>
-    <script>
-        AFRAME.registerComponent('disable-cardboard', {
-            init: function () {
-                this.el.sceneEl.setAttribute('vr-mode-ui', { enabled: false, cardboard: false });
-            }
-        });
-    </script>
-    <a-scene embedded disable-cardboard ...>
+
     <!-- AR Scene -->
     <div id="arScene">
         <a-scene
             embedded
             vr-mode-ui="enabled: false; cardboard: false"
-            webxr="requiredFeatures: local-floor; optionalFeatures: bounded-floor"
+            webxr="requiredFeatures: hit-test, local-floor; optionalFeatures: bounded-floor"
             device-orientation-permission-ui="enabled: false"
         >
             <!-- Lighting -->
             <a-light type="ambient" intensity="1"></a-light>
             <a-light type="directional" intensity="1" position="0 2 1"></a-light>
 
-            <!-- Test Object -->
+            <!-- Reticle for Surface Detection -->
+            <a-ring
+                id="reticle"
+                position="0 0 -1"
+                radius-inner="0.02"
+                radius-outer="0.03"
+                color="white"
+                visible="false"
+            ></a-ring>
+
+            <!-- Test Object (Red Box) -->
             <a-box
+                id="redBox"
                 position="0 0 -0.5"
                 scale="0.2 0.2 0.2"
                 color="red"
+                visible="false"
             ></a-box>
 
             <!-- Contact Details Text -->
@@ -57,6 +62,7 @@
                 align="left"
                 width="1"
                 scale="0.3 0.3 0.3"
+                visible="false"
             ></a-text>
         </a-scene>
     </div>
@@ -64,6 +70,9 @@
     <script>
         const status = document.getElementById("status");
         const enterARButton = document.getElementById("enterAR");
+        const reticle = document.getElementById("reticle");
+        const redBox = document.getElementById("redBox");
+        const contactDetails = document.getElementById("contactDetails");
 
         // Fetch Contact Details from Google Sheet
         async function fetchData() {
@@ -102,18 +111,82 @@
             }
         }
 
-        // Manual AR Session Trigger
+        // Manual AR Session Trigger with Hit-Test
         async function startARSession() {
             try {
                 const session = await navigator.xr.requestSession('immersive-ar', {
-                    requiredFeatures: ['local-floor'],
+                    requiredFeatures: ['hit-test', 'local-floor'],
                     optionalFeatures: ['bounded-floor']
                 });
                 console.log("AR session started:", session);
-                status.innerText = "AR mode activated!";
+                status.innerText = "AR mode activated! Move your phone to find a surface (e.g., floor).";
+
+                // Set up hit-test for surface detection
+                const scene = document.querySelector('a-scene');
+                let hitTestSource = null;
+                let localSpace = null;
+
                 session.addEventListener('end', () => {
                     console.log("AR session ended.");
                     status.innerText = "AR mode ended.";
+                    reticle.setAttribute('visible', 'false');
+                    redBox.setAttribute('visible', 'false');
+                    contactDetails.setAttribute('visible', 'false');
+                });
+
+                // Initialize hit-test
+                session.requestReferenceSpace('viewer').then(viewerSpace => {
+                    session.requestReferenceSpace('local-floor').then(local => {
+                        localSpace = local;
+                        session.requestHitTestSource({ space: viewerSpace }).then(source => {
+                            hitTestSource = source;
+                            console.log("Hit-test source initialized.");
+                        });
+                    });
+                });
+
+                // On each frame, check for a detected surface
+                scene.renderer.xr.addEventListener('session-frame', (frame) => {
+                    if (!hitTestSource || !localSpace) return;
+
+                    const frameData = frame.session.getViewerPose(localSpace);
+                    if (!frameData) return;
+
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(localSpace);
+
+                        // Show reticle at the detected surface
+                        reticle.setAttribute('visible', 'true');
+                        reticle.setAttribute('position', {
+                            x: pose.transform.position.x,
+                            y: pose.transform.position.y,
+                            z: pose.transform.position.z
+                        });
+
+                        // Place objects on the detected surface
+                        redBox.setAttribute('visible', 'true');
+                        redBox.setAttribute('position', {
+                            x: pose.transform.position.x,
+                            y: pose.transform.position.y,
+                            z: pose.transform.position.z
+                        });
+
+                        contactDetails.setAttribute('visible', 'true');
+                        contactDetails.setAttribute('position', {
+                            x: pose.transform.position.x + 0.3,
+                            y: pose.transform.position.y,
+                            z: pose.transform.position.z
+                        });
+
+                        console.log("Surface detected, objects placed at:", pose.transform.position);
+                    } else {
+                        reticle.setAttribute('visible', 'false');
+                        redBox.setAttribute('visible', 'false');
+                        contactDetails.setAttribute('visible', 'false');
+                        console.log("No surface detected yet.");
+                    }
                 });
             } catch (error) {
                 console.error("Failed to start AR session:", error);
