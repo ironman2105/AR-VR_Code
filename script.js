@@ -1,21 +1,30 @@
-async function fetchData() {
-    const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs"; 
-    const url = `https://docs.google.com/spreadsheets/d/1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs/gviz/tq?tqx=out:json`;
+const sheetURL = `https://docs.google.com/spreadsheets/d/1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs/gviz/tq?tqx=out:json`;
 
-    try {
-        let response = await fetch(url);
-        let text = await response.text();
-        
-        let jsonData = JSON.parse(text.substring(47, text.length - 2)); // Clean JSON format
-        let rows = jsonData.table.rows[0].c; // Get first row data
-
-        document.getElementById("name").innerText = rows[0].v;
-        document.getElementById("address").innerText = rows[1].v;
-        document.getElementById("email").innerText = rows[2].v;
-        document.getElementById("contact").innerText = rows[3].v;
-    } catch (error) {
-        console.error("Error fetching data:", error);
+fetch(sheetURL)
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.length > 0) {
+      const info = data[0];
+      const text = `👨‍⚖️ ${info.Name}\n📞 ${info.Phone}\n📧 ${info.Email}\n🏠 ${info.Address}`;
+      document.querySelector('#contactInfo').setAttribute('text', {
+        value: text,
+        align: 'center',
+        color: '#000000',
+        width: 1.5
+      });
+    } else {
+      document.querySelector('#contactInfo').setAttribute('text', {
+        value: 'No data found!',
+        color: '#ff0000',
+        width: 1.5
+      });
     }
-}
-
-fetchData();
+  })
+  .catch(err => {
+    console.error("Failed to fetch contact data", err);
+    document.querySelector('#contactInfo').setAttribute('text', {
+      value: 'Error loading data',
+      color: '#ff0000',
+      width: 1.5
+    });
+  });

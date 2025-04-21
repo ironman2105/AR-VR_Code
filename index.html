@@ -1,31 +1,36 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR Business Card</title>
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/2.2.1/aframe/build/aframe-ar.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>AR Lawyer Business Card</title>
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.4/dist/aframe/mindar-aframe.prod.js"></script>
+    <script src="script.js" defer></script>
+    <style>
+      body, html { margin: 0; padding: 0; overflow: hidden; }
+    </style>
   </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene embedded arjs>
-      <a-marker preset="hiro">
-        <a-entity 
-          gltf-model="#model" 
-          scale="0.5 0.5 0.5" 
-          position="0 0 0">
-        </a-entity>
-
-        <!-- Text populated from JS -->
-        <a-entity id="contactInfo" position="0 0.5 0" rotation="-90 0 0" text="value: Loading..."></a-entity>
-      </a-marker>
+  <body>
+    <a-scene mindar-image="imageTargetSrc: targets.mind;" 
+             color-space="sRGB" 
+             embedded 
+             renderer="colorManagement: true, physicallyCorrectLights"
+             vr-mode-ui="enabled: false" 
+             device-orientation-permission-ui="enabled: true">
 
       <a-assets>
-        <a-asset-item id="model" src="model.glb"></a-asset-item>
+        <!-- Your 3D model (must be GLB format) -->
+        <a-asset-item id="lawyerModel" src="lawyer_leech_societys_professional_parasites.glb"></a-asset-item>
       </a-assets>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <script src="script.js"></script>
+      <a-entity mindar-image-target="targetIndex: 0">
+        <!-- 3D model -->
+        <a-gltf-model src="#lawyerModel" position="0 -0.5 0" scale="0.3 0.3 0.3" rotation="0 180 0"></a-gltf-model>
+
+        <!-- Dynamic contact info -->
+        <a-entity id="contactInfo" position="0 0.8 0" text="value: Loading...; align: center; color: black; width: 1.8"></a-entity>
+      </a-entity>
+    </a-scene>
   </body>
 </html>
