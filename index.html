@@ -21,7 +21,14 @@
 
     <!-- Manual AR Button -->
     <button id="enterAR" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">Enter AR Mode</button>
-
+    <script>
+        AFRAME.registerComponent('disable-cardboard', {
+            init: function () {
+                this.el.sceneEl.setAttribute('vr-mode-ui', { enabled: false, cardboard: false });
+            }
+        });
+    </script>
+    <a-scene embedded disable-cardboard ...>
     <!-- AR Scene -->
     <div id="arScene">
         <a-scene
