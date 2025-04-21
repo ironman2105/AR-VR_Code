@@ -19,9 +19,6 @@
         <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
     </div>
 
-    <!-- Manual AR Button -->
-    <button id="enterAR" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 10px; background: #333; color: white; border: none; border-radius: 5px;">Enter AR Mode</button>
-
     <!-- AR Scene -->
     <div id="arScene">
         <a-scene
@@ -46,7 +43,7 @@
                 id="contactDetails"
                 value="Loading..."
                 position="0.3 0 -1"
-                color="black"
+                color="white"
                 align="left"
                 width="1"
                 scale="0.3 0.3 0.3"
@@ -56,7 +53,6 @@
 
     <script>
         const status = document.getElementById("status");
-        const enterARButton = document.getElementById("enterAR");
 
         // Fetch Contact Details from Google Sheet
         async function fetchData() {
@@ -95,7 +91,7 @@
             }
         }
 
-        // Manual AR Session Trigger
+        // Automatically Start WebXR AR Session
         async function startARSession() {
             try {
                 const session = await navigator.xr.requestSession('immersive-ar', {
@@ -109,6 +105,10 @@
                     console.log("AR session ended.");
                     status.innerText = "AR mode ended.";
                 });
+
+                // Link the WebXR session to A-Frame
+                const scene = document.querySelector('a-scene');
+                scene.renderer.xr.setSession(session);
             } catch (error) {
                 console.error("Failed to start AR session:", error);
                 status.innerText = "Failed to enter AR mode. Check console.";
@@ -116,17 +116,16 @@
         }
 
         // Initialize
-        window.onload = function() {
-            fetchData();
+        window.onload = async function() {
+            await fetchData();
 
-            // Check WebXR support
+            // Check WebXR support and start AR session automatically
             if (navigator.xr) {
                 navigator.xr.isSessionSupported('immersive-ar').then(supported => {
                     if (supported) {
-                        status.innerText += " AR supported! Tap the button to enter AR mode.";
+                        status.innerText += " AR supported! Starting AR mode...";
                         console.log("WebXR AR supported.");
-                        enterARButton.style.display = "block";
-                        enterARButton.addEventListener("click", startARSession);
+                        startARSession(); // Automatically start AR mode
                     } else {
                         status.innerText += " AR not supported. Showing 2D view.";
                         console.log("WebXR AR not supported.");
