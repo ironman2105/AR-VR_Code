@@ -58,7 +58,17 @@
         card.setAttribute("visible", true);
         msg.innerText = "✅ Object placed on the surface!";
       });
-
+    
+        // Basic check for mobile
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+      
+        if (!isMobile) {
+          document.getElementById("message").innerText =
+            "❌ AR not supported on desktop. Please scan this on your phone!";
+          // Optionally hide the scene or add a static image/text
+          document.querySelector("a-scene").style.display = "none";
+        }
+      
       // Fallback if nothing happens after a few seconds
       setTimeout(() => {
         if (!card.getAttribute("visible")) {
