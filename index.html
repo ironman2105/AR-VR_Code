@@ -22,11 +22,15 @@
     <!-- AR Scene -->
     <div id="arScene">
         <a-scene
-            embedded
-            vr-mode-ui="enabled: false; cardboard: false"
-            webxr="optionalFeatures: local-floor, bounded-floor"
-            device-orientation-permission-ui="enabled: false"
-        >
+    xrweb="allowed: true"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    webxr="optionalFeatures: hit-test;"
+    arjs
+    embedded
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+>
+
             <!-- Lighting -->
             <a-light type="ambient" intensity="1"></a-light>
             <a-light type="directional" intensity="1" position="0 2 1"></a-light>
