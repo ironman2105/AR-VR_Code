@@ -8,49 +8,39 @@
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js/aframe/build/aframe-ar.js"></script>
 </head>
-<body>
-    <h2>AR Visiting Card</h2>
-    <p id="status">Loading data...</p>
+<body style="margin: 0; overflow: hidden; background-color: white;">
 
-    <!-- Contact Details Display -->
-    <div id="details">
-        <p><strong>Name:</strong> <span id="name">Loading...</span></p>
-        <p><strong>Address:</strong> <span id="address">Loading...</span></p>
-        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-        <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
-    </div>
+    <h2 style="text-align: center; color: black; padding-top: 20px;">AR Visiting Card</h2>
+    <p id="status" style="text-align: center; color: black;">Loading data...</p>
 
     <!-- AR Scene -->
     <a-scene
         embedded
         arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best; debugUIEnabled: false; matrixCodeType: 3x3;"
-        renderer="colorManagement: true; physicallyCorrectLights: true"
+        renderer="colorManagement: true; physicallyCorrectLights: true; background: 'white';"
     >
         <!-- Lighting -->
         <a-light type="ambient" intensity="1"></a-light>
         <a-light type="directional" intensity="1" position="0 2 1"></a-light>
 
-        <!-- Cartoon 3D Model (Use a placeholder for testing) -->
-        <a-box
-            position="0 0 -1"
-            scale="0.5 0.5 0.5"
-            color="red"
-        ></a-box>
-
-               <a-entity gltf-model="url(lawyer_leech_societys_professional_parasites.glb)" scale="1 1 1" position="0 0 -2"></a-entity>
-
+        <!-- 3D Model (Replace this with your actual 3D model) -->
+        <a-entity id="lawyer-model"
+                  gltf-model="url(lawyer_leech_societys_professional_parasites.glb)"
+                  scale="1 1 1"
+                  position="0 0 -2"
+                  click-listener="url: https://www.fab.com/listings/fd49e750-8ec0-4e0c-9fb8-5f1fbc843c6d;">
+        </a-entity>
 
         <!-- Contact Details Text -->
         <a-text
             id="contactDetails"
             value="Loading..."
             position="0.3 0 -1"
-            color="white"
+            color="black"
             align="left"
             width="1"
             scale="0.3 0.3 0.3"
         ></a-text>
-
     </a-scene>
 
     <script>
@@ -60,7 +50,7 @@
         async function fetchData() {
             status.innerText = "Fetching data from Google Sheet...";
             const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs"; // Replace with your Google Sheets ID
-            const url = `https://docs.google.com/spreadsheets/d/1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs/gviz/tq?tqx=out:json`;
+            const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
 
             try {
                 let response = await fetch(url);
@@ -94,6 +84,19 @@
         window.onload = async function() {
             await fetchData();
         };
+
+        // Click Listener for AR Object to navigate to the URL
+        AFRAME.registerComponent('click-listener', {
+            schema: {
+                url: {type: 'string'}
+            },
+            init: function () {
+                this.el.addEventListener('click', () => {
+                    window.location.href = this.data.url; // Navigate to the URL
+                });
+            }
+        });
     </script>
+
 </body>
 </html>
