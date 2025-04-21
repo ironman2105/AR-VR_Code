@@ -1,153 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AR Visiting Card</title>
-    <link rel="stylesheet" href="style.css">
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-</head>
-<body>
-    <h2>AR Visiting Card</h2>
-    <p id="status">Loading data...</p>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.0.0/dist/aframe-ar-hit-test.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        background: #000;
+        color: #fff;
+        text-align: center;
+      }
+      #loading {
+        position: absolute;
+        width: 100%;
+        top: 10px;
+        z-index: 1;
+        font-size: 1.2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loading">📡 Starting AR Experience...</div>
 
-    <!-- Contact Details Display -->
-    <div id="details">
-        <p><strong>Name:</strong> <span id="name">Loading...</span></p>
-        <p><strong>Address:</strong> <span id="address">Loading...</span></p>
-        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
-        <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
-    </div>
+    <a-scene
+      webxr="optionalFeatures: hit-test;"
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true"
+      embedded
+      ar-hit-test="target: #infoBox"
+    >
+      <!-- Camera and Light -->
+      <a-entity camera></a-entity>
+      <a-light type="ambient" intensity="1"></a-light>
 
-    <!-- AR Scene -->
-    <div id="arScene">
-        <a-scene
-    xrweb="allowed: true"
-    renderer="colorManagement: true; physicallyCorrectLights: true"
-    webxr="optionalFeatures: hit-test;"
-    arjs
-    embedded
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
->
-
-            <!-- Lighting -->
-            <a-light type="ambient" intensity="1"></a-light>
-            <a-light type="directional" intensity="1" position="0 2 1"></a-light>
-
-            <!-- Test Object (Red Box) -->
-            <a-box
-                position="0 0 -1"
-                scale="0.2 0.2 0.2"
-                color="red"
-            ></a-box>
-
-            <!-- Contact Details Text -->
-            <a-text
-                id="contactDetails"
-                value="Loading..."
-                position="0.3 0 -1"
-                color="white"
-                align="left"
-                width="1"
-                scale="0.3 0.3 0.3"
-            ></a-text>
-        </a-scene>
-    </div>
+      <!-- Info Box that appears on the floor -->
+      <a-entity id="infoBox" visible="false">
+        <a-box color="red" depth="0.1" height="0.1" width="0.1" position="0 0 0"></a-box>
+        <a-text
+          value="Name: Tony Stark\nEmail: tony@starkindustries.com\nContact: 123-456-7890"
+          color="#FFF"
+          position="0 0.2 0"
+          align="center"
+          width="2"
+        ></a-text>
+      </a-entity>
+    </a-scene>
 
     <script>
-        const status = document.getElementById("status");
+      const infoBox = document.getElementById("infoBox");
+      const loading = document.getElementById("loading");
 
-        // Fetch Contact Details from Google Sheet
-        async function fetchData() {
-            status.innerText = "Fetching data from Google Sheet...";
-            const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs";
-            const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+      AFRAME.scenes[0].addEventListener("ar-hit-test-select", () => {
+        infoBox.setAttribute("visible", true);
+        loading.innerText = "✅ Object placed!";
+      });
 
-            try {
-                let response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-                let text = await response.text();
-                let jsonData = JSON.parse(text.substring(47, text.length - 2));
-                let rows = jsonData.table.rows[0].c;
+      AFRAME.scenes[0].addEventListener("enter-vr", () => {
+        loading.innerText = "Move your phone to detect a surface...";
+      });
 
-                const details = {
-                    name: rows[0]?.v || "N/A",
-                    address: rows[1]?.v || "N/A",
-                    email: rows[2]?.v || "N/A",
-                    contact: rows[3]?.v || "N/A"
-                };
-
-                document.getElementById("name").innerText = details.name;
-                document.getElementById("address").innerText = details.address;
-                document.getElementById("email").innerText = details.email;
-                document.getElementById("contact").innerText = details.contact;
-
-                const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
-                document.getElementById("contactDetails").setAttribute("value", arText);
-
-                status.innerText = "Data loaded successfully!";
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                status.innerText = "Failed to load data. Check console.";
-            }
-        }
-
-        // Automatically Start WebXR AR Session
-        async function startARSession() {
-            try {
-                const session = await navigator.xr.requestSession('immersive-ar', {
-                    optionalFeatures: ['local-floor', 'bounded-floor']
-                });
-                console.log("AR session started successfully:", session);
-                status.innerText = "AR mode activated! Objects should appear on the floor.";
-
-                session.addEventListener('end', () => {
-                    console.log("AR session ended.");
-                    status.innerText = "AR mode ended. Showing 2D view.";
-                });
-
-                const scene = document.querySelector('a-scene');
-                scene.renderer.xr.setSession(session);
-            } catch (error) {
-                console.error("Failed to start AR session:", error.message);
-                console.error("Error details:", error);
-                status.innerText = "Failed to enter AR mode. Check console.";
-            }
-        }
-
-        // Initialize
-        window.onload = async function() {
-            await fetchData();
-
-            if (navigator.xr) {
-                navigator.xr.isSessionSupported('immersive-ar').then(supported => {
-                    if (supported) {
-                        status.innerText += " AR supported! Starting AR mode...";
-                        console.log("WebXR AR supported.");
-                        startARSession();
-                    } else {
-                        status.innerText += " AR not supported on this device/browser. Showing 2D view.";
-                        console.log("WebXR AR not supported.");
-                    }
-                }).catch(err => {
-                    console.error("WebXR support check failed:", err.message);
-                    console.error("Error details:", err);
-                    status.innerText += " WebXR error. Showing 2D view.";
-                });
-            } else {
-                console.log("WebXR not supported in this browser.");
-                status.innerText += " WebXR not supported. Showing 2D view.";
-            }
-
-            const scene = document.querySelector('a-scene');
-            scene.addEventListener('loaded', () => {
-                console.log("A-Frame scene loaded.");
-            });
-            scene.addEventListener('renderstart', () => {
-                console.log("A-Frame rendering started.");
-            });
-        };
+      AFRAME.scenes[0].addEventListener("exit-vr", () => {
+        loading.innerText = "📡 AR session ended.";
+        infoBox.setAttribute("visible", false);
+      });
     </script>
-</body>
+  </body>
 </html>
