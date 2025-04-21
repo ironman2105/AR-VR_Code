@@ -1,102 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AR Visiting Card</title>
+<html>
+  <head>
+    <title>AR Business Card</title>
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/2.2.1/aframe/build/aframe-ar.js"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/jeromeetienne/AR.js/aframe/build/aframe-ar.js"></script>
-</head>
-<body style="margin: 0; overflow: hidden; background-color: white;">
-
-    <h2 style="text-align: center; color: black; padding-top: 20px;">AR Visiting Card</h2>
-    <p id="status" style="text-align: center; color: black;">Loading data...</p>
-
-    <!-- AR Scene -->
-    <a-scene
-        embedded
-        arjs="sourceType: webcam; detectionMode: mono; trackingMethod: best; debugUIEnabled: false; matrixCodeType: 3x3;"
-        renderer="colorManagement: true; physicallyCorrectLights: true; background: 'white';"
-    >
-        <!-- Lighting -->
-        <a-light type="ambient" intensity="1"></a-light>
-        <a-light type="directional" intensity="1" position="0 2 1"></a-light>
-
-        <!-- 3D Model (Replace this with your actual 3D model) -->
-        <a-entity id="lawyer-model"
-                  gltf-model="url(lawyer_leech_societys_professional_parasites.glb)"
-                  scale="1 1 1"
-                  position="0 0 -2"
-                  click-listener="url: https://www.fab.com/listings/fd49e750-8ec0-4e0c-9fb8-5f1fbc843c6d;">
+  </head>
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs>
+      <a-marker preset="hiro">
+        <a-entity 
+          gltf-model="#model" 
+          scale="0.5 0.5 0.5" 
+          position="0 0 0">
         </a-entity>
 
-        <!-- Contact Details Text -->
-        <a-text
-            id="contactDetails"
-            value="Loading..."
-            position="0.3 0 -1"
-            color="black"
-            align="left"
-            width="1"
-            scale="0.3 0.3 0.3"
-        ></a-text>
+        <!-- Text populated from JS -->
+        <a-entity id="contactInfo" position="0 0.5 0" rotation="-90 0 0" text="value: Loading..."></a-entity>
+      </a-marker>
+
+      <a-assets>
+        <a-asset-item id="model" src="model.glb"></a-asset-item>
+      </a-assets>
+
+      <a-entity camera></a-entity>
     </a-scene>
 
-    <script>
-        const status = document.getElementById("status");
-
-        // Fetch Contact Details from Google Sheet
-        async function fetchData() {
-            status.innerText = "Fetching data from Google Sheet...";
-            const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs"; // Replace with your Google Sheets ID
-            const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
-
-            try {
-                let response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-                let text = await response.text();
-                let jsonData = JSON.parse(text.substring(47, text.length - 2));
-                let rows = jsonData.table.rows[0].c;
-
-                const details = {
-                    name: rows[0]?.v || "N/A",
-                    address: rows[1]?.v || "N/A",
-                    email: rows[2]?.v || "N/A",
-                    contact: rows[3]?.v || "N/A"
-                };
-
-                document.getElementById("name").innerText = details.name;
-                document.getElementById("address").innerText = details.address;
-                document.getElementById("email").innerText = details.email;
-                document.getElementById("contact").innerText = details.contact;
-
-                const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
-                document.getElementById("contactDetails").setAttribute("value", arText);
-
-                status.innerText = "Data loaded successfully!";
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                status.innerText = "Failed to load data. Check console.";
-            }
-        }
-
-        window.onload = async function() {
-            await fetchData();
-        };
-
-        // Click Listener for AR Object to navigate to the URL
-        AFRAME.registerComponent('click-listener', {
-            schema: {
-                url: {type: 'string'}
-            },
-            init: function () {
-                this.el.addEventListener('click', () => {
-                    window.location.href = this.data.url; // Navigate to the URL
-                });
-            }
-        });
-    </script>
-
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
