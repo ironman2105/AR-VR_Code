@@ -1,80 +1,108 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>AR Visiting Card</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar-hit-test@1.0.0/dist/aframe-ar-hit-test.min.js"></script>
-    <style>
-      body {
-        margin: 0;
-        overflow: hidden;
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>AR Visiting Card</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+</head>
+<body>
+  <h2>AR Visiting Card</h2>
+  <p id="status">Loading data...</p>
+
+  <!-- Fallback message for non-mobile -->
+  <div id="fallback" style="display: none; color: red;">
+    ❌ AR not supported on this device. Please open on a mobile device.
+  </div>
+
+  <!-- Contact Details Display -->
+  <div id="details">
+    <p><strong>Name:</strong> <span id="name">Loading...</span></p>
+    <p><strong>Address:</strong> <span id="address">Loading...</span></p>
+    <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+    <p><strong>Contact Number:</strong> <span id="contact">Loading...</span></p>
+  </div>
+
+  <!-- AR Scene -->
+  <a-scene
+    vr-mode-ui="enabled: false"
+    embedded
+    webxr="optionalFeatures: hit-test; dom-overlay"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    xrweb
+  >
+    <!-- Lighting -->
+    <a-light type="ambient" intensity="1"></a-light>
+    <a-light type="directional" intensity="1" position="0 2 1"></a-light>
+
+    <!-- Anchor for floor placement -->
+    <a-entity position="0 0 0">
+      <!-- AR Object: Red Box -->
+      <a-box position="0 0.1 -1" scale="0.2 0.2 0.2" color="red"></a-box>
+
+      <!-- AR Text with details -->
+      <a-text
+        id="contactDetails"
+        value="Loading..."
+        position="-0.5 0 -1.2"
+        color="white"
+        align="left"
+        width="1.5"
+        scale="0.3 0.3 0.3"
+      ></a-text>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const status = document.getElementById("status");
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    const fallback = document.getElementById("fallback");
+
+    // Show fallback on desktop
+    if (!isMobile) {
+      fallback.style.display = "block";
+      document.querySelector("a-scene").style.display = "none";
+    }
+
+    // Fetch Contact Details from Google Sheet
+    async function fetchData() {
+      status.innerText = "Fetching data from Google Sheet...";
+      const sheetID = "1cFt2ab4Q757yySBB0CqxjYLnXGdqp0_EzXzfnScFWXs";
+      const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:json`;
+
+      try {
+        let response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        let text = await response.text();
+        let jsonData = JSON.parse(text.substring(47, text.length - 2));
+        let rows = jsonData.table.rows[0].c;
+
+        const details = {
+          name: rows[0]?.v || "N/A",
+          address: rows[1]?.v || "N/A",
+          email: rows[2]?.v || "N/A",
+          contact: rows[3]?.v || "N/A",
+        };
+
+        document.getElementById("name").innerText = details.name;
+        document.getElementById("address").innerText = details.address;
+        document.getElementById("email").innerText = details.email;
+        document.getElementById("contact").innerText = details.contact;
+
+        const arText = `Name: ${details.name}\nAddress: ${details.address}\nEmail: ${details.email}\nContact: ${details.contact}`;
+        document.getElementById("contactDetails").setAttribute("value", arText);
+
+        status.innerText = "✅ AR Experience Ready";
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        status.innerText = "❌ Failed to load data.";
       }
-      #message {
-        position: absolute;
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: white;
-        z-index: 10;
-        font-size: 1.2em;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 10px;
-        border-radius: 8px;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">📡 Move your phone to detect a flat surface...</div>
+    }
 
-    <a-scene
-      webxr="optionalFeatures: hit-test;"
-      vr-mode-ui="enabled: false"
-      renderer="colorManagement: true"
-      ar-hit-test="target: #card; type: select"
-      embedded
-    >
-      <a-entity camera></a-entity>
-
-      <a-entity id="card" visible="false">
-        <a-box color="crimson" position="0 0.05 0" height="0.1" width="0.3" depth="0.2"></a-box>
-        <a-text
-          value="Tony Stark\nEmail: tony@stark.com\nPhone: 1234567890"
-          align="center"
-          position="0 0.3 0"
-          width="2"
-          color="white"
-        ></a-text>
-      </a-entity>
-    </a-scene>
-
-    <script>
-      const card = document.getElementById("card");
-      const msg = document.getElementById("message");
-
-      // When hit-test successfully places the object
-      AFRAME.scenes[0].addEventListener("ar-hit-test-select", () => {
-        card.setAttribute("visible", true);
-        msg.innerText = "✅ Object placed on the surface!";
-      });
-    
-        // Basic check for mobile
-        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-      
-        if (!isMobile) {
-          document.getElementById("message").innerText =
-            "❌ AR not supported on desktop. Please scan this on your phone!";
-          // Optionally hide the scene or add a static image/text
-          document.querySelector("a-scene").style.display = "none";
-        }
-      
-      // Fallback if nothing happens after a few seconds
-      setTimeout(() => {
-        if (!card.getAttribute("visible")) {
-          msg.innerText = "⚠️ Try pointing your phone at a brighter flat surface.";
-        }
-      }, 7000);
-    </script>
-  </body>
+    window.onload = async function () {
+      await fetchData();
+    };
+  </script>
+</body>
 </html>
